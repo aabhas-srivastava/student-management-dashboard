@@ -19,8 +19,8 @@ const seedData: Student[] = [
     trainer: "Urahara Kisuke",
     experience: "100 years",
     status: "Active",
-    score: 101,
-    pendingAssignments: 999,
+    score: 100,
+    pendingAssignments: 3,
   },
   {
     id: 2,
@@ -35,8 +35,8 @@ const seedData: Student[] = [
     trainer: "Urahara Kisuke",
     experience: "1 year",
     status: "Completed",
-    score: 100,
-    pendingAssignments: 0,
+    score: 84,
+    pendingAssignments: 2,
   },
   {
     id: 3,
@@ -51,8 +51,8 @@ const seedData: Student[] = [
     trainer: "Priya Verma",
     experience: "3 years",
     status: "Active",
-    score: 999,
-    pendingAssignments: 5,
+    score: 89,
+    pendingAssignments: 2,
   },
   {
     id: 4,
@@ -67,8 +67,8 @@ const seedData: Student[] = [
     trainer: "Yamamoto",
     experience: "Fresher",
     status: "Inactive",
-    score: 99,
-    pendingAssignments: 2,
+    score: 74,
+    pendingAssignments: 0,
   },
   {
     id: 5,
@@ -83,8 +83,8 @@ const seedData: Student[] = [
     trainer: "Unohana",
     experience: "4 years",
     status: "Active",
-    score: 99,
-    pendingAssignments: 1,
+    score: 46,
+    pendingAssignments: 3,
   },
   {
     id: 6,
@@ -99,8 +99,8 @@ const seedData: Student[] = [
     trainer: "None",
     experience: "2 years",
     status: "Completed",
-    score: 95,
-    pendingAssignments: 0,
+    score: 69,
+    pendingAssignments: 5,
   },
 ];
 
