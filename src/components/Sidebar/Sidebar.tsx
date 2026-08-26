@@ -14,12 +14,14 @@ import {
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import PeopleIcon from "@mui/icons-material/People";
 import { usePathname, useRouter } from "next/navigation";
+import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 
 const drawerWidth = 240;
 
 const menuItems = [
   { text: "Dashboard", path: "/dashboard", icon: <DashboardIcon fontSize="small" /> },
   { text: "Students", path: "/students", icon: <PeopleIcon fontSize="small" /> },
+  { text: "Calendar", path: "/calendar", icon: <CalendarMonthIcon fontSize="small" /> },
 ];
 
 export default function Sidebar() {
