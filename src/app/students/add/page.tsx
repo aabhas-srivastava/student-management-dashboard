@@ -1,7 +1,3 @@
-"use client";
+import AddStudentPage from "@/src/pages/AddStudent/AddStudentPage";
 
-import StudentForm from "@/src/components/StudentForm/StudentForm";
-
-export default function AddStudentPage() {
-  return <StudentForm />;
-}
+export default AddStudentPage;

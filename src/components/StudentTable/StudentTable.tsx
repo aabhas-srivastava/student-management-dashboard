@@ -1,19 +1,47 @@
 "use client";
 
+import { useState } from "react";
 import { DataGrid, GridColDef, GridActionsCellItem } from "@mui/x-data-grid";
 import { Box, Chip } from "@mui/material";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useRouter } from "next/navigation";
+import { toast } from "react-toastify";
 import { Student } from "@/src/types/student";
+import { deleteStudent } from "@/src/services/studentService";
+import ConfirmDialog from "@/src/components/ConfirmDialog/ConfirmDialog";
 
 interface StudentTableProps {
   students: Student[];
+  onRefresh: () => void;
 }
 
-export default function StudentTable({ students }: StudentTableProps) {
+export default function StudentTable({ students, onRefresh }: StudentTableProps) {
   const router = useRouter();
+  const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [deleteName, setDeleteName] = useState("");
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDeleteClick = (id: number, name: string) => {
+    setDeleteId(id);
+    setDeleteName(name);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteId) return;
+    setDeleting(true);
+    try {
+      await deleteStudent(deleteId);
+      toast.success("Student deleted successfully");
+      onRefresh();
+    } catch {
+      toast.error("Failed to delete student");
+    } finally {
+      setDeleting(false);
+      setDeleteId(null);
+    }
+  };
 
   const columns: GridColDef[] = [
     {
@@ -60,7 +88,7 @@ export default function StudentTable({ students }: StudentTableProps) {
       field: "actions",
       type: "actions",
       headerName: "Actions",
-      width: 130,
+      width: 140,
       getActions: (params) => [
         <GridActionsCellItem
           key="view"
@@ -78,44 +106,58 @@ export default function StudentTable({ students }: StudentTableProps) {
           key="delete"
           icon={<DeleteIcon />}
           label="Delete"
-          onClick={() => alert(`Delete ${params.row.firstName} (coming soon)`)}
+          onClick={() =>
+            handleDeleteClick(
+              Number(params.id),
+              `${params.row.firstName} ${params.row.lastName}`
+            )
+          }
         />,
       ],
     },
   ];
 
   return (
-    <Box
-      sx={{
-        border: "1px solid #eaeaea",
-        borderRadius: 2,
-        overflow: "hidden",
-        backgroundColor: "#fff",
-      }}
-    >
-      <DataGrid
-        rows={students}
-        columns={columns}
-        getRowId={(row) => row.id}
-        initialState={{
-          pagination: {
-            paginationModel: { pageSize: 10 },
-          },
-        }}
-        pageSizeOptions={[5, 10, 25]}
-        disableRowSelectionOnClick
-        autoHeight
+    <>
+      <Box
         sx={{
-          border: "none",
-          "& .MuiDataGrid-columnHeaders": {
-            backgroundColor: "#fafafa",
-            fontWeight: 600,
-          },
-          "& .MuiDataGrid-cell": {
-            borderBottom: "1px solid #f0f0f0",
-          },
+          border: "1px solid #eaeaea",
+          borderRadius: 2,
+          overflow: "hidden",
+          backgroundColor: "#fff",
         }}
+      >
+        <DataGrid
+          rows={students}
+          columns={columns}
+          getRowId={(row) => row.id}
+          initialState={{
+            pagination: { paginationModel: { pageSize: 10 } },
+          }}
+          pageSizeOptions={[5, 10, 25]}
+          disableRowSelectionOnClick
+          autoHeight
+          sx={{
+            border: "none",
+            "& .MuiDataGrid-columnHeaders": {
+              backgroundColor: "#fafafa",
+              fontWeight: 600,
+            },
+            "& .MuiDataGrid-cell": {
+              borderBottom: "1px solid #f0f0f0",
+            },
+          }}
+        />
+      </Box>
+
+      <ConfirmDialog
+        open={deleteId !== null}
+        title="Delete Student"
+        message={`Are you sure you want to delete ${deleteName}?`}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeleteId(null)}
+        loading={deleting}
       />
-    </Box>
+    </>
   );
 }

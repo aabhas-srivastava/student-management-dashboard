@@ -1,3 +1,3 @@
-export default function EditStudentPage() {
-  return <div style={{ padding: 20 }}>Edit Student 404</div>;
-}
+import EditStudentPage from "@/src/pages/EditStudent/EditStudentPage";
+
+export default EditStudentPage;
