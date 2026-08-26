@@ -23,7 +23,7 @@ export default function StudentDetailsPage() {
   const [student, setStudent] = useState<Student | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const id = Number(params.id);
+  const id = Number(params?.id);
 
   useEffect(() => {
     if (!id) return;
@@ -52,7 +52,11 @@ export default function StudentDetailsPage() {
   return (
     <Box>
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 4 }}>
-        <Typography variant="h5" sx={{ fontWeight: 600, letterSpacing: -0.4 }}>
+        <Typography
+          variant="h5"
+          component="h1"
+          sx={{ fontWeight: 600, letterSpacing: -0.4 }}
+        >
           Student Details
         </Typography>
         <Box sx={{ display: "flex", gap: 1.5 }}>
@@ -118,7 +122,11 @@ export default function StudentDetailsPage() {
           <Grid size={{ xs: 12, sm: 6 }}>
             <Typography variant="body2" color="text.secondary">Status</Typography>
             <Box sx={{ mt: 0.5 }}>
-              <Chip label={student.status} size="small" sx={{ backgroundColor: "#f4f4f4", fontWeight: 500 }} />
+              <Chip
+                label={student.status}
+                size="small"
+                sx={{ backgroundColor: "#f4f4f4", fontWeight: 500 }}
+              />
             </Box>
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }}>
@@ -126,7 +134,9 @@ export default function StudentDetailsPage() {
             <Typography sx={{ fontWeight: 500, mt: 0.5 }}>{student.score}</Typography>
           </Grid>
           <Grid size={{ xs: 12 }}>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>Progress</Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+              Progress
+            </Typography>
             <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
               <LinearProgress
                 variant="determinate"
@@ -139,7 +149,9 @@ export default function StudentDetailsPage() {
                   "& .MuiLinearProgress-bar": { backgroundColor: "#111" },
                 }}
               />
-              <Typography sx={{ fontWeight: 500 }}>{student.score}%</Typography>
+              <Typography component="span" sx={{ fontWeight: 500 }}>
+                {student.score}%
+              </Typography>
             </Box>
           </Grid>
         </Grid>

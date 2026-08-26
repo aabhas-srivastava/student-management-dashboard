@@ -17,8 +17,12 @@ import {
 } from "@mui/material";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
-import { createStudent, getStudents } from "@/src/services/studentService";
-import { StudentInput } from "@/src/types/student";
+import {
+  createStudent,
+  updateStudent,
+  getStudents,
+} from "@/src/services/studentService";
+import { Student, StudentInput } from "@/src/types/student";
 
 const steps = ["Personal Information", "Course Information", "Confirmation"];
 
@@ -40,36 +44,47 @@ const step2Schema = Yup.object({
   experience: Yup.string().required("Experience is required"),
 });
 
-const initialValues: StudentInput = {
-  firstName: "",
-  lastName: "",
-  email: "",
-  phone: "",
-  dateOfBirth: "",
-  course: "",
-  batch: "",
-  startDate: "",
-  trainer: "",
-  experience: "",
-  status: "Active",
-  score: 0,
-  pendingAssignments: 0,
-};
+interface StudentFormProps {
+  initialData?: Student;
+  isEdit?: boolean;
+}
 
-export default function StudentForm() {
+export default function StudentForm({
+  initialData,
+  isEdit = false,
+}: StudentFormProps) {
   const [activeStep, setActiveStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
 
   const formik = useFormik({
-    initialValues,
-    validationSchema: activeStep === 0 ? step1Schema : activeStep === 1 ? step2Schema : undefined,
-    onSubmit: async (values: StudentInput) => {
+    initialValues: {
+      firstName: initialData?.firstName || "",
+      lastName: initialData?.lastName || "",
+      email: initialData?.email || "",
+      phone: initialData?.phone || "",
+      dateOfBirth: initialData?.dateOfBirth || "",
+      course: initialData?.course || "",
+      batch: initialData?.batch || "",
+      startDate: initialData?.startDate || "",
+      trainer: initialData?.trainer || "",
+      experience: initialData?.experience || "",
+      status: initialData?.status || "Active",
+      score: initialData?.score || 0,
+      pendingAssignments: initialData?.pendingAssignments || 0,
+    } as StudentInput,
+    enableReinitialize: true,
+    validationSchema:
+      activeStep === 0 ? step1Schema : activeStep === 1 ? step2Schema : undefined,
+    onSubmit: async (values) => {
       setIsSubmitting(true);
       try {
+        // Unique email check (skip current student when editing)
         const existing = await getStudents();
         const emailExists = existing.some(
-          (s) => s.email.toLowerCase() === values.email.toLowerCase()
+          (s) =>
+            s.email.toLowerCase() === values.email.toLowerCase() &&
+            (!isEdit || s.id !== initialData?.id)
         );
 
         if (emailExists) {
@@ -78,11 +93,17 @@ export default function StudentForm() {
           return;
         }
 
-        await createStudent(values);
-        toast.success("Student added successfully!");
+        if (isEdit && initialData) {
+          await updateStudent(initialData.id, values);
+          toast.success("Student updated successfully!");
+        } else {
+          await createStudent(values);
+          toast.success("Student added successfully!");
+        }
+
         router.push("/students");
       } catch {
-        toast.error("Failed to add student");
+        toast.error(isEdit ? "Failed to update student" : "Failed to add student");
         setIsSubmitting(false);
       }
     },
@@ -127,10 +148,9 @@ export default function StudentForm() {
     <Box>
       <Typography
         variant="h5"
-        component="h2"
         sx={{ fontWeight: 600, mb: 4, letterSpacing: -0.4 }}
       >
-        Add Student
+        {isEdit ? "Edit Student" : "Add Student"}
       </Typography>
 
       <Paper
@@ -151,7 +171,7 @@ export default function StudentForm() {
         </Stepper>
 
         <form onSubmit={formik.handleSubmit}>
-          {/* STEP 1 */}
+          {/* STEP 1 - Personal Information */}
           {activeStep === 0 && (
             <Grid container spacing={3}>
               <Grid size={{ xs: 12, sm: 6 }}>
@@ -212,14 +232,16 @@ export default function StudentForm() {
                   value={formik.values.dateOfBirth}
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
-                  error={formik.touched.dateOfBirth && Boolean(formik.errors.dateOfBirth)}
+                  error={
+                    formik.touched.dateOfBirth && Boolean(formik.errors.dateOfBirth)
+                  }
                   helperText={formik.touched.dateOfBirth && formik.errors.dateOfBirth}
                 />
               </Grid>
             </Grid>
           )}
 
-          {/* STEP 2 */}
+          {/* STEP 2 - Course Information */}
           {activeStep === 1 && (
             <Grid container spacing={3}>
               <Grid size={{ xs: 12, sm: 6 }}>
@@ -291,7 +313,9 @@ export default function StudentForm() {
                   value={formik.values.experience}
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
-                  error={formik.touched.experience && Boolean(formik.errors.experience)}
+                  error={
+                    formik.touched.experience && Boolean(formik.errors.experience)
+                  }
                   helperText={formik.touched.experience && formik.errors.experience}
                   placeholder="e.g. 2 years / Fresher"
                 />
@@ -299,51 +323,75 @@ export default function StudentForm() {
             </Grid>
           )}
 
-          {/* STEP 3 */}
+          {/* STEP 3 - Confirmation */}
           {activeStep === 2 && (
             <Box>
-              <Typography variant="h6" component="h6" sx={{ mb: 3, fontWeight: 600 }}>
+              <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>
                 Please confirm the details
               </Typography>
 
               <Grid container spacing={2}>
                 <Grid size={{ xs: 6 }}>
-                  <Typography color="text.secondary">Name</Typography>
+                  <Typography color="text.secondary" variant="body2">
+                    Name
+                  </Typography>
                   <Typography sx={{ fontWeight: 500 }}>
                     {formik.values.firstName} {formik.values.lastName}
                   </Typography>
                 </Grid>
                 <Grid size={{ xs: 6 }}>
-                  <Typography color="text.secondary">Email</Typography>
+                  <Typography color="text.secondary" variant="body2">
+                    Email
+                  </Typography>
                   <Typography sx={{ fontWeight: 500 }}>{formik.values.email}</Typography>
                 </Grid>
                 <Grid size={{ xs: 6 }}>
-                  <Typography color="text.secondary">Phone</Typography>
+                  <Typography color="text.secondary" variant="body2">
+                    Phone
+                  </Typography>
                   <Typography sx={{ fontWeight: 500 }}>{formik.values.phone}</Typography>
                 </Grid>
                 <Grid size={{ xs: 6 }}>
-                  <Typography color="text.secondary">Date of Birth</Typography>
-                  <Typography sx={{ fontWeight: 500 }}>{formik.values.dateOfBirth}</Typography>
+                  <Typography color="text.secondary" variant="body2">
+                    Date of Birth
+                  </Typography>
+                  <Typography sx={{ fontWeight: 500 }}>
+                    {formik.values.dateOfBirth}
+                  </Typography>
                 </Grid>
                 <Grid size={{ xs: 6 }}>
-                  <Typography color="text.secondary">Course</Typography>
+                  <Typography color="text.secondary" variant="body2">
+                    Course
+                  </Typography>
                   <Typography sx={{ fontWeight: 500 }}>{formik.values.course}</Typography>
                 </Grid>
                 <Grid size={{ xs: 6 }}>
-                  <Typography color="text.secondary">Batch</Typography>
+                  <Typography color="text.secondary" variant="body2">
+                    Batch
+                  </Typography>
                   <Typography sx={{ fontWeight: 500 }}>{formik.values.batch}</Typography>
                 </Grid>
                 <Grid size={{ xs: 6 }}>
-                  <Typography color="text.secondary">Start Date</Typography>
-                  <Typography sx={{ fontWeight: 500 }}>{formik.values.startDate}</Typography>
+                  <Typography color="text.secondary" variant="body2">
+                    Start Date
+                  </Typography>
+                  <Typography sx={{ fontWeight: 500 }}>
+                    {formik.values.startDate}
+                  </Typography>
                 </Grid>
                 <Grid size={{ xs: 6 }}>
-                  <Typography color="text.secondary">Trainer</Typography>
+                  <Typography color="text.secondary" variant="body2">
+                    Trainer
+                  </Typography>
                   <Typography sx={{ fontWeight: 500 }}>{formik.values.trainer}</Typography>
                 </Grid>
                 <Grid size={{ xs: 6 }}>
-                  <Typography color="text.secondary">Experience</Typography>
-                  <Typography sx={{ fontWeight: 500 }}>{formik.values.experience}</Typography>
+                  <Typography color="text.secondary" variant="body2">
+                    Experience
+                  </Typography>
+                  <Typography sx={{ fontWeight: 500 }}>
+                    {formik.values.experience}
+                  </Typography>
                 </Grid>
               </Grid>
             </Box>
@@ -354,8 +402,8 @@ export default function StudentForm() {
             <Button
               disabled={activeStep === 0 || isSubmitting}
               onClick={handleBack}
-              sx={{ color: "#111", borderColor: "#ddd" }}
               variant="outlined"
+              sx={{ color: "#111", borderColor: "#ddd" }}
             >
               Back
             </Button>
@@ -373,7 +421,9 @@ export default function StudentForm() {
               {isSubmitting
                 ? "Saving..."
                 : activeStep === steps.length - 1
-                ? "Submit"
+                ? isEdit
+                  ? "Update"
+                  : "Submit"
                 : "Next"}
             </Button>
           </Box>

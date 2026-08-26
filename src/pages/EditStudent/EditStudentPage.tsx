@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { ComponentType } from "react";
 import { useParams } from "next/navigation";
 import Loading from "@/src/components/Loading/Loading";
 import StudentForm from "@/src/components/StudentForm/StudentForm";
@@ -13,7 +12,7 @@ export default function EditStudentPage() {
   const [student, setStudent] = useState<Student | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const id = Number(params.id);
+  const id = Number(params?.id);
 
   useEffect(() => {
     if (!id) return;
@@ -25,10 +24,5 @@ export default function EditStudentPage() {
   if (loading) return <Loading message="Loading student..." />;
   if (!student) return <div>Student not found</div>;
 
-  const EditStudentForm = StudentForm as ComponentType<{
-    initialData: Student;
-    isEdit: boolean;
-  }>;
-
-  return <EditStudentForm initialData={student} isEdit={true} />;
+  return <StudentForm initialData={student} isEdit={true} />;
 }
