@@ -1,64 +1,148 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  ReactNode,
+} from "react";
 import { useRouter, usePathname } from "next/navigation";
+
+type UserRole = "admin" | "student" | null;
 
 interface AuthContextType {
   isLoggedIn: boolean;
-  login: (username: string, password: string) => boolean;
+  role: UserRole;
+  studentId: number | null;
+  login: (
+    email: string,
+    password: string,
+    role: "admin" | "student"
+  ) => boolean;
   logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const studentAccounts = [
+  { email: "aman@test.com", password: "student123", studentId: 1 },
+  { email: "riya@test.com", password: "student123", studentId: 2 },
+  { email: "vikram@test.com", password: "student123", studentId: 3 },
+  { email: "sneha@test.com", password: "student123", studentId: 4 },
+  { email: "arjun@test.com", password: "student123", studentId: 5 },
+];
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [role, setRole] = useState<UserRole>(null);
+  const [studentId, setStudentId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
     const loggedIn = localStorage.getItem("isLoggedIn") === "true";
+    const savedRole = localStorage.getItem("role") as UserRole;
+    const savedStudentId = localStorage.getItem("studentId");
+
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsLoggedIn(loggedIn);
+    setRole(savedRole);
+    setStudentId(savedStudentId ? Number(savedStudentId) : null);
     setLoading(false);
   }, []);
 
   useEffect(() => {
-    if (loading) return;
+    if (loading || !pathname) return;
 
-    // If not logged in and trying to access any page except /login → redirect to login
     if (!isLoggedIn && pathname !== "/login") {
       router.push("/login");
+      return;
     }
 
-    // If already logged in and on /login → redirect to dashboard
     if (isLoggedIn && pathname === "/login") {
-      router.push("/dashboard");
+      router.push(role === "student" ? "/profile" : "/dashboard");
+      return;
     }
-  }, [isLoggedIn, pathname, loading, router]);
 
-  const login = (username: string, password: string) => {
-    if (username === "aabhas" && password === "aabhas0305") {
-      localStorage.setItem("isLoggedIn", "true");
-      setIsLoggedIn(true);
-      return true;
+    if (isLoggedIn && role === "student") {
+      const allowed = ["/profile", "/calendar", "/events"];
+      const isAllowed = allowed.some((route) => pathname.startsWith(route));
+      if (!isAllowed) {
+        router.push("/profile");
+      }
     }
+  }, [isLoggedIn, role, pathname, loading, router]);
+
+  const login = (
+    email: string,
+    password: string,
+    selectedRole: "admin" | "student"
+  ) => {
+    const cleanedEmail = email.trim().toLowerCase();
+
+    // Admin login
+    if (selectedRole === "admin") {
+      if (cleanedEmail === "admin@test.com" && password === "admin123") {
+        localStorage.setItem("isLoggedIn", "true");
+        localStorage.setItem("role", "admin");
+        localStorage.removeItem("studentId");
+        setIsLoggedIn(true);
+        setRole("admin");
+        setStudentId(null);
+        return true;
+      }
+    }
+
+    // Student login
+    if (selectedRole === "student") {
+      const account = studentAccounts.find(
+        (acc) => acc.email === cleanedEmail && acc.password === password
+      );
+
+      if (!account) return false;
+
+      // Check if student still exists (not deleted by admin)
+      try {
+        const raw = localStorage.getItem("students");
+        const students = raw ? JSON.parse(raw) : [];
+        const stillExists = students.some(
+          (s: { id: number }) => s.id === account.studentId
+        );
+
+        if (!stillExists) return false;
+
+        localStorage.setItem("isLoggedIn", "true");
+        localStorage.setItem("role", "student");
+        localStorage.setItem("studentId", String(account.studentId));
+        setIsLoggedIn(true);
+        setRole("student");
+        setStudentId(account.studentId);
+        return true;
+      } catch {
+        return false;
+      }
+    }
+
     return false;
   };
 
   const logout = () => {
     localStorage.removeItem("isLoggedIn");
+    localStorage.removeItem("role");
+    localStorage.removeItem("studentId");
     setIsLoggedIn(false);
+    setRole(null);
+    setStudentId(null);
     router.push("/login");
   };
 
-  if (loading) {
-    return null; // or a loading spinner
-  }
+  if (loading) return null;
 
   return (
-    <AuthContext.Provider value={{ isLoggedIn, login, logout }}>
+    <AuthContext.Provider value={{ isLoggedIn, role, studentId, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

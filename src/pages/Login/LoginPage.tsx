@@ -9,6 +9,11 @@ import {
   Paper,
   InputAdornment,
   IconButton,
+  Radio,
+  RadioGroup,
+  FormControlLabel,
+  FormControl,
+  FormLabel,
 } from "@mui/material";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
@@ -17,9 +22,10 @@ import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [role, setRole] = useState<"admin" | "student">("admin");
   const [loading, setLoading] = useState(false);
 
   const { login } = useAuth();
@@ -30,11 +36,11 @@ export default function LoginPage() {
     setLoading(true);
 
     setTimeout(() => {
-      const success = login(username.trim(), password);
+      const success = login(email.trim(), password, role);
 
       if (success) {
-        toast.success("Login successful!");
-        router.push("/dashboard");
+        toast.success(`${role === "admin" ? "Admin" : "Student"} login successful!`);
+        router.push(role === "student" ? "/profile" : "/dashboard");
       } else {
         toast.error("Invalid username or password");
         setLoading(false);
@@ -67,7 +73,8 @@ export default function LoginPage() {
         <Box sx={{ textAlign: "center", mb: 4 }}>
           <Typography
             variant="h5"
-            sx={{ fontWeight: 700, letterSpacing: -0.5, color: "#111" }}
+            color="#111"
+            sx={{ fontWeight: 700, letterSpacing: -0.5 }}
           >
             Student Management
           </Typography>
@@ -77,11 +84,27 @@ export default function LoginPage() {
         </Box>
 
         <form onSubmit={handleSubmit}>
+          {/* Role Selection */}
+          <FormControl sx={{ mb: 3, width: "100%" }}>
+            <FormLabel sx={{ mb: 1, color: "#333", fontWeight: 500 }}>
+              Login as
+            </FormLabel>
+            <RadioGroup
+              row
+              value={role}
+              onChange={(e) => setRole(e.target.value as "admin" | "student")}
+            >
+              <FormControlLabel value="admin" control={<Radio />} label="Admin" />
+              <FormControlLabel value="student" control={<Radio />} label="Student" />
+            </RadioGroup>
+          </FormControl>
+
           <TextField
             fullWidth
-            label="Username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            label="Email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             sx={{ mb: 2.5 }}
             required
             autoFocus
@@ -99,7 +122,11 @@ export default function LoginPage() {
               input: {
                 endAdornment: (
                   <InputAdornment position="end">
-                    <IconButton onClick={() => setShowPassword(!showPassword)} edge="end" size="small">
+                    <IconButton
+                      onClick={() => setShowPassword(!showPassword)}
+                      edge="end"
+                      size="small"
+                    >
                       {showPassword ? <VisibilityOff /> : <Visibility />}
                     </IconButton>
                   </InputAdornment>
@@ -128,13 +155,14 @@ export default function LoginPage() {
           </Button>
         </form>
 
-        <Typography
-          variant="caption"
-          component="p"
-          sx={{ display: "block", textAlign: "center", color: "text.secondary", mt: 3 }}
-        >
-          Use username: <strong>aabhas</strong> / password: <strong>aabhas0305</strong>
-        </Typography>
+        <Box sx={{ mt: 3 }}>
+            <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>
+                <strong>Admin:</strong> admin@test.com / admin123
+            </Typography>
+            <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>
+                <strong>Student:</strong> aman@test.com / student123
+            </Typography>
+        </Box>
       </Paper>
     </Box>
   );
