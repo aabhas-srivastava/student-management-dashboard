@@ -70,6 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (isLoggedIn && role === "student") {
       const allowed = ["/profile", "/calendar", "/events"];
       const isAllowed = allowed.some((route) => pathname.startsWith(route));
+
       if (!isAllowed) {
         router.push("/profile");
       }
@@ -77,57 +78,53 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [isLoggedIn, role, pathname, loading, router]);
 
   const login = (
-    email: string,
-    password: string,
-    selectedRole: "admin" | "student"
-  ) => {
-    const cleanedEmail = email.trim().toLowerCase();
+  email: string,
+  password: string,
+  selectedRole: "admin" | "student"
+) => {
+  const cleanedEmail = email.trim().toLowerCase();
 
-    // Admin login
-    if (selectedRole === "admin") {
-      if (cleanedEmail === "admin@test.com" && password === "admin123") {
-        localStorage.setItem("isLoggedIn", "true");
-        localStorage.setItem("role", "admin");
-        localStorage.removeItem("studentId");
-        setIsLoggedIn(true);
-        setRole("admin");
-        setStudentId(null);
-        return true;
-      }
+  // Admin login
+  if (selectedRole === "admin") {
+    if (cleanedEmail === "admin@test.com" && password === "admin123") {
+      localStorage.setItem("isLoggedIn", "true");
+      localStorage.setItem("role", "admin");
+      localStorage.removeItem("studentId");
+      setIsLoggedIn(true);
+      setRole("admin");
+      setStudentId(null);
+      return true;
     }
+  }
 
-    // Student login
-    if (selectedRole === "student") {
-      const account = studentAccounts.find(
-        (acc) => acc.email === cleanedEmail && acc.password === password
+  // Student login – any existing student can login with password "student123"
+  if (selectedRole === "student") {
+    if (password !== "student123") return false;
+
+    try {
+      const raw = localStorage.getItem("students");
+      const students = raw ? JSON.parse(raw) : [];
+
+      const student = students.find(
+        (s: any) => s.email.toLowerCase() === cleanedEmail
       );
 
-      if (!account) return false;
+      if (!student) return false;
 
-      // Check if student still exists (not deleted by admin)
-      try {
-        const raw = localStorage.getItem("students");
-        const students = raw ? JSON.parse(raw) : [];
-        const stillExists = students.some(
-          (s: { id: number }) => s.id === account.studentId
-        );
-
-        if (!stillExists) return false;
-
-        localStorage.setItem("isLoggedIn", "true");
-        localStorage.setItem("role", "student");
-        localStorage.setItem("studentId", String(account.studentId));
-        setIsLoggedIn(true);
-        setRole("student");
-        setStudentId(account.studentId);
-        return true;
-      } catch {
-        return false;
-      }
+      localStorage.setItem("isLoggedIn", "true");
+      localStorage.setItem("role", "student");
+      localStorage.setItem("studentId", String(student.id));
+      setIsLoggedIn(true);
+      setRole("student");
+      setStudentId(student.id);
+      return true;
+    } catch {
+      return false;
     }
+}
 
-    return false;
-  };
+  return false;
+};
 
   const logout = () => {
     localStorage.removeItem("isLoggedIn");

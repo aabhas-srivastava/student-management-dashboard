@@ -23,6 +23,7 @@ import {
   getStudents,
 } from "@/src/services/studentService";
 import { Student, StudentInput } from "@/src/types/student";
+import { useAuth } from "@/src/context/AuthContext";
 
 const steps = ["Personal Information", "Course Information", "Confirmation"];
 
@@ -42,6 +43,8 @@ const step2Schema = Yup.object({
   startDate: Yup.string().required("Start Date is required"),
   trainer: Yup.string().required("Trainer is required"),
   experience: Yup.string().required("Experience is required"),
+  score: Yup.number().min(0, "Min 0").max(100, "Max 100"),
+  status: Yup.string().oneOf(["Active", "Completed", "Inactive"]),
 });
 
 interface StudentFormProps {
@@ -56,6 +59,8 @@ export default function StudentForm({
   const [activeStep, setActiveStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
+  const { role } = useAuth();
+  const isStudent = role === "student";
 
   const formik = useFormik({
     initialValues: {
@@ -70,8 +75,8 @@ export default function StudentForm({
       trainer: initialData?.trainer || "",
       experience: initialData?.experience || "",
       status: initialData?.status || "Active",
-      score: initialData?.score || 0,
-      pendingAssignments: initialData?.pendingAssignments || 0,
+      score: initialData?.score ?? 0,
+      pendingAssignments: initialData?.pendingAssignments ?? 0,
     } as StudentInput,
     enableReinitialize: true,
     validationSchema:
@@ -79,31 +84,47 @@ export default function StudentForm({
     onSubmit: async (values) => {
       setIsSubmitting(true);
       try {
-        // Unique email check (skip current student when editing)
+        const finalValues: StudentInput = {
+          ...values,
+          score: isStudent ? (initialData?.score ?? 0) : Number(values.score),
+          status: isStudent
+            ? (initialData?.status ?? "Active")
+            : values.status,
+        };
+
         const existing = await getStudents();
         const emailExists = existing.some(
           (s) =>
-            s.email.toLowerCase() === values.email.toLowerCase() &&
+            s.email.toLowerCase() === finalValues.email.toLowerCase() &&
             (!isEdit || s.id !== initialData?.id)
         );
 
         if (emailExists) {
           toast.error("Email already exists");
-          setIsSubmitting(false);
           return;
         }
 
         if (isEdit && initialData) {
-          await updateStudent(initialData.id, values);
-          toast.success("Student updated successfully!");
+          await updateStudent(initialData.id, finalValues);
+          toast.success(
+            isStudent
+              ? "Profile updated successfully!"
+              : "Student updated successfully!"
+          );
         } else {
-          await createStudent(values);
+          await createStudent(finalValues);
           toast.success("Student added successfully!");
         }
 
-        router.push("/students");
-      } catch {
-        toast.error(isEdit ? "Failed to update student" : "Failed to add student");
+        if (isStudent) {
+          router.replace("/profile");
+        } else {
+          router.replace("/students");
+        }
+      } catch (error) {
+        console.error(error);
+        toast.error(isEdit ? "Failed to update" : "Failed to add student");
+      } finally {
         setIsSubmitting(false);
       }
     },
@@ -113,7 +134,7 @@ export default function StudentForm({
     if (activeStep === 0) {
       const errors = await formik.validateForm();
       const fields = ["firstName", "lastName", "email", "phone", "dateOfBirth"];
-      const hasError = fields.some((field) => !!(errors as never)[field]);
+      const hasError = fields.some((field) => !!(errors as any)[field]);
 
       if (hasError) {
         fields.forEach((field) => formik.setFieldTouched(field, true));
@@ -126,7 +147,7 @@ export default function StudentForm({
     if (activeStep === 1) {
       const errors = await formik.validateForm();
       const fields = ["course", "batch", "startDate", "trainer", "experience"];
-      const hasError = fields.some((field) => !!(errors as never)[field]);
+      const hasError = fields.some((field) => !!(errors as any)[field]);
 
       if (hasError) {
         fields.forEach((field) => formik.setFieldTouched(field, true));
@@ -136,7 +157,6 @@ export default function StudentForm({
       return;
     }
 
-    // Last step → Submit
     formik.handleSubmit();
   };
 
@@ -150,7 +170,11 @@ export default function StudentForm({
         variant="h5"
         sx={{ fontWeight: 600, mb: 4, letterSpacing: -0.4 }}
       >
-        {isEdit ? "Edit Student" : "Add Student"}
+        {isStudent
+          ? "Edit Profile"
+          : isEdit
+          ? "Edit Student"
+          : "Add Student"}
       </Typography>
 
       <Paper
@@ -171,7 +195,7 @@ export default function StudentForm({
         </Stepper>
 
         <form onSubmit={formik.handleSubmit}>
-          {/* STEP 1 - Personal Information */}
+          {/* STEP 1 */}
           {activeStep === 0 && (
             <Grid container spacing={3}>
               <Grid size={{ xs: 12, sm: 6 }}>
@@ -233,15 +257,18 @@ export default function StudentForm({
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
                   error={
-                    formik.touched.dateOfBirth && Boolean(formik.errors.dateOfBirth)
+                    formik.touched.dateOfBirth &&
+                    Boolean(formik.errors.dateOfBirth)
                   }
-                  helperText={formik.touched.dateOfBirth && formik.errors.dateOfBirth}
+                  helperText={
+                    formik.touched.dateOfBirth && formik.errors.dateOfBirth
+                  }
                 />
               </Grid>
             </Grid>
           )}
 
-          {/* STEP 2 - Course Information */}
+          {/* STEP 2 */}
           {activeStep === 1 && (
             <Grid container spacing={3}>
               <Grid size={{ xs: 12, sm: 6 }}>
@@ -262,6 +289,7 @@ export default function StudentForm({
                   <MenuItem value="Python">Python</MenuItem>
                 </TextField>
               </Grid>
+
               <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
                   select
@@ -279,6 +307,7 @@ export default function StudentForm({
                   <MenuItem value="Batch 3">Batch 3</MenuItem>
                 </TextField>
               </Grid>
+
               <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
                   fullWidth
@@ -289,10 +318,13 @@ export default function StudentForm({
                   value={formik.values.startDate}
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
-                  error={formik.touched.startDate && Boolean(formik.errors.startDate)}
+                  error={
+                    formik.touched.startDate && Boolean(formik.errors.startDate)
+                  }
                   helperText={formik.touched.startDate && formik.errors.startDate}
                 />
               </Grid>
+
               <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
                   fullWidth
@@ -305,6 +337,7 @@ export default function StudentForm({
                   helperText={formik.touched.trainer && formik.errors.trainer}
                 />
               </Grid>
+
               <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
                   fullWidth
@@ -314,16 +347,60 @@ export default function StudentForm({
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
                   error={
-                    formik.touched.experience && Boolean(formik.errors.experience)
+                    formik.touched.experience &&
+                    Boolean(formik.errors.experience)
                   }
-                  helperText={formik.touched.experience && formik.errors.experience}
+                  helperText={
+                    formik.touched.experience && formik.errors.experience
+                  }
                   placeholder="e.g. 2 years / Fresher"
                 />
               </Grid>
+
+              {/* Score - Admin only */}
+              {!isStudent && (
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <TextField
+                    fullWidth
+                    type="number"
+                    label="Score"
+                    name="score"
+                    value={formik.values.score}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    inputProps={{ min: 0, max: 100 }}
+                    error={formik.touched.score && Boolean(formik.errors.score)}
+                    helperText={formik.touched.score && formik.errors.score}
+                  />
+                </Grid>
+              )}
+
+              {/* Status - Admin only */}
+              {!isStudent && (
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <TextField
+                    select
+                    fullWidth
+                    label="Status"
+                    name="status"
+                    value={formik.values.status}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    error={
+                      formik.touched.status && Boolean(formik.errors.status)
+                    }
+                    helperText={formik.touched.status && formik.errors.status}
+                  >
+                    <MenuItem value="Active">Active</MenuItem>
+                    <MenuItem value="Completed">Completed</MenuItem>
+                    <MenuItem value="Inactive">Inactive</MenuItem>
+                  </TextField>
+                </Grid>
+              )}
             </Grid>
           )}
 
-          {/* STEP 3 - Confirmation */}
+          {/* STEP 3 */}
           {activeStep === 2 && (
             <Box>
               <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>
@@ -343,13 +420,17 @@ export default function StudentForm({
                   <Typography color="text.secondary" variant="body2">
                     Email
                   </Typography>
-                  <Typography sx={{ fontWeight: 500 }}>{formik.values.email}</Typography>
+                  <Typography sx={{ fontWeight: 500 }}>
+                    {formik.values.email}
+                  </Typography>
                 </Grid>
                 <Grid size={{ xs: 6 }}>
                   <Typography color="text.secondary" variant="body2">
                     Phone
                   </Typography>
-                  <Typography sx={{ fontWeight: 500 }}>{formik.values.phone}</Typography>
+                  <Typography sx={{ fontWeight: 500 }}>
+                    {formik.values.phone}
+                  </Typography>
                 </Grid>
                 <Grid size={{ xs: 6 }}>
                   <Typography color="text.secondary" variant="body2">
@@ -363,13 +444,17 @@ export default function StudentForm({
                   <Typography color="text.secondary" variant="body2">
                     Course
                   </Typography>
-                  <Typography sx={{ fontWeight: 500 }}>{formik.values.course}</Typography>
+                  <Typography sx={{ fontWeight: 500 }}>
+                    {formik.values.course}
+                  </Typography>
                 </Grid>
                 <Grid size={{ xs: 6 }}>
                   <Typography color="text.secondary" variant="body2">
                     Batch
                   </Typography>
-                  <Typography sx={{ fontWeight: 500 }}>{formik.values.batch}</Typography>
+                  <Typography sx={{ fontWeight: 500 }}>
+                    {formik.values.batch}
+                  </Typography>
                 </Grid>
                 <Grid size={{ xs: 6 }}>
                   <Typography color="text.secondary" variant="body2">
@@ -383,7 +468,9 @@ export default function StudentForm({
                   <Typography color="text.secondary" variant="body2">
                     Trainer
                   </Typography>
-                  <Typography sx={{ fontWeight: 500 }}>{formik.values.trainer}</Typography>
+                  <Typography sx={{ fontWeight: 500 }}>
+                    {formik.values.trainer}
+                  </Typography>
                 </Grid>
                 <Grid size={{ xs: 6 }}>
                   <Typography color="text.secondary" variant="body2">
@@ -393,12 +480,34 @@ export default function StudentForm({
                     {formik.values.experience}
                   </Typography>
                 </Grid>
+                <Grid size={{ xs: 6 }}>
+                  <Typography color="text.secondary" variant="body2">
+                    Score
+                  </Typography>
+                  <Typography sx={{ fontWeight: 500 }}>
+                    {isStudent
+                      ? initialData?.score ?? 0
+                      : formik.values.score}
+                  </Typography>
+                </Grid>
+                <Grid size={{ xs: 6 }}>
+                  <Typography color="text.secondary" variant="body2">
+                    Status
+                  </Typography>
+                  <Typography sx={{ fontWeight: 500 }}>
+                    {isStudent
+                      ? initialData?.status ?? "Active"
+                      : formik.values.status}
+                  </Typography>
+                </Grid>
               </Grid>
             </Box>
           )}
 
           {/* Buttons */}
-          <Box sx={{ display: "flex", justifyContent: "space-between", mt: 5 }}>
+          <Box
+            sx={{ display: "flex", justifyContent: "space-between", mt: 5 }}
+          >
             <Button
               disabled={activeStep === 0 || isSubmitting}
               onClick={handleBack}

@@ -1,12 +1,10 @@
 "use client";
 
 import { AppBar, Toolbar, Typography, Box, Button } from "@mui/material";
-import { useAppContext } from "@/src/context/AppContext";
 import { useAuth } from "@/src/context/AuthContext";
 
 export default function Header() {
-  const { adminName } = useAppContext();
-  const { logout } = useAuth();
+  const { logout, role } = useAuth();
 
   return (
     <AppBar
@@ -20,13 +18,7 @@ export default function Header() {
       }}
     >
       <Toolbar sx={{ justifyContent: "space-between", px: 3 }}>
-        <Typography
-          variant="h6"
-          sx={{
-            fontWeight: 600,
-            letterSpacing: -0.4,
-          }}
-        >
+        <Typography variant="h6" sx={{ fontWeight: 600, letterSpacing: -0.4 }}>
           Student Management
         </Typography>
 
@@ -38,7 +30,7 @@ export default function Header() {
               fontWeight: 500,
             }}
           >
-            {adminName}
+            {role === "student" ? "Student" : "Admin"}
           </Box>
 
           <Button
@@ -50,9 +42,7 @@ export default function Header() {
               fontWeight: 500,
               border: "1px solid #eaeaea",
               px: 2,
-              "&:hover": {
-                backgroundColor: "#f5f5f5",
-              },
+              "&:hover": { backgroundColor: "#f5f5f5" },
             }}
           >
             Logout

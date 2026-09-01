@@ -35,17 +35,29 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
 
-    setTimeout(() => {
+    try {
       const success = login(email.trim(), password, role);
 
       if (success) {
-        toast.success(`${role === "admin" ? "Admin" : "Student"} login successful!`);
-        router.push(role === "student" ? "/profile" : "/dashboard");
+        toast.success(
+          role === "admin" ? "Admin login successful!" : "Student login successful!"
+        );
+
+        // Redirect based on selected role
+        if (role === "student") {
+          router.replace("/profile");
+        } else {
+          router.replace("/dashboard");
+        }
       } else {
-        toast.error("Invalid username or password");
-        setLoading(false);
+        toast.error("Invalid email or password");
       }
-    }, 500);
+    } catch (error) {
+      console.error(error);
+      toast.error("Login failed");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

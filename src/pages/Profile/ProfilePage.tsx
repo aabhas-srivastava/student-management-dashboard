@@ -39,71 +39,94 @@ export default function ProfilePage() {
 
   return (
     <Box>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 4 }}>
-        <Typography variant="h5" sx={{ fontWeight: 600, letterSpacing: -0.4 }}>
-          My Profile
-        </Typography>
+      <Typography
+        variant="h5"
+        sx={{ fontWeight: 600, letterSpacing: -0.4, mb: 3 }}
+      >
+        My Profile
+      </Typography>
 
-        <Button
-          startIcon={<EditIcon />}
-          variant="contained"
-          onClick={() => router.push("/profile/edit")}
-          sx={{
-            backgroundColor: "#111",
-            textTransform: "none",
-            "&:hover": { backgroundColor: "#333" },
-          }}
-        >
-          Edit Profile
-        </Button>
-      </Box>
-
-      <Paper elevation={0} sx={{ border: "1px solid #eaeaea", borderRadius: 2, p: 4 }}>
+      <Paper
+        elevation={0}
+        sx={{ border: "1px solid #eaeaea", borderRadius: 2, p: 4, mb: 3 }}
+      >
         <Grid container spacing={3}>
           <Grid size={{ xs: 12, sm: 6 }}>
-            <Typography variant="body2" color="text.secondary">Full Name</Typography>
+            <Typography variant="body2" color="text.secondary">
+              Full Name
+            </Typography>
             <Typography sx={{ fontWeight: 500, mt: 0.5 }}>
               {student.firstName} {student.lastName}
             </Typography>
           </Grid>
 
           <Grid size={{ xs: 12, sm: 6 }}>
-            <Typography variant="body2" color="text.secondary">Email</Typography>
-            <Typography sx={{ fontWeight: 500, mt: 0.5 }}>{student.email}</Typography>
+            <Typography variant="body2" color="text.secondary">
+              Email
+            </Typography>
+            <Typography sx={{ fontWeight: 500, mt: 0.5 }}>
+              {student.email}
+            </Typography>
           </Grid>
 
           <Grid size={{ xs: 12, sm: 6 }}>
-            <Typography variant="body2" color="text.secondary">Phone</Typography>
-            <Typography sx={{ fontWeight: 500, mt: 0.5 }}>{student.phone}</Typography>
+            <Typography variant="body2" color="text.secondary">
+              Phone
+            </Typography>
+            <Typography sx={{ fontWeight: 500, mt: 0.5 }}>
+              {student.phone}
+            </Typography>
           </Grid>
 
           <Grid size={{ xs: 12, sm: 6 }}>
-            <Typography variant="body2" color="text.secondary">Date of Birth</Typography>
-            <Typography sx={{ fontWeight: 500, mt: 0.5 }}>{student.dateOfBirth}</Typography>
+            <Typography variant="body2" color="text.secondary">
+              Date of Birth
+            </Typography>
+            <Typography sx={{ fontWeight: 500, mt: 0.5 }}>
+              {student.dateOfBirth}
+            </Typography>
           </Grid>
 
           <Grid size={{ xs: 12, sm: 6 }}>
-            <Typography variant="body2" color="text.secondary">Course</Typography>
-            <Typography sx={{ fontWeight: 500, mt: 0.5 }}>{student.course}</Typography>
+            <Typography variant="body2" color="text.secondary">
+              Course
+            </Typography>
+            <Typography sx={{ fontWeight: 500, mt: 0.5 }}>
+              {student.course}
+            </Typography>
           </Grid>
 
           <Grid size={{ xs: 12, sm: 6 }}>
-            <Typography variant="body2" color="text.secondary">Batch</Typography>
-            <Typography sx={{ fontWeight: 500, mt: 0.5 }}>{student.batch}</Typography>
+            <Typography variant="body2" color="text.secondary">
+              Batch
+            </Typography>
+            <Typography sx={{ fontWeight: 500, mt: 0.5 }}>
+              {student.batch}
+            </Typography>
           </Grid>
 
           <Grid size={{ xs: 12, sm: 6 }}>
-            <Typography variant="body2" color="text.secondary">Trainer</Typography>
-            <Typography sx={{ fontWeight: 500, mt: 0.5 }}>{student.trainer}</Typography>
+            <Typography variant="body2" color="text.secondary">
+              Trainer
+            </Typography>
+            <Typography sx={{ fontWeight: 500, mt: 0.5 }}>
+              {student.trainer}
+            </Typography>
           </Grid>
 
           <Grid size={{ xs: 12, sm: 6 }}>
-            <Typography variant="body2" color="text.secondary">Experience</Typography>
-            <Typography sx={{ fontWeight: 500, mt: 0.5 }}>{student.experience}</Typography>
+            <Typography variant="body2" color="text.secondary">
+              Experience
+            </Typography>
+            <Typography sx={{ fontWeight: 500, mt: 0.5 }}>
+              {student.experience}
+            </Typography>
           </Grid>
 
           <Grid size={{ xs: 12, sm: 6 }}>
-            <Typography variant="body2" color="text.secondary">Status</Typography>
+            <Typography variant="body2" color="text.secondary">
+              Status
+            </Typography>
             <Box sx={{ mt: 0.5 }}>
               <Chip
                 label={student.status}
@@ -114,8 +137,12 @@ export default function ProfilePage() {
           </Grid>
 
           <Grid size={{ xs: 12, sm: 6 }}>
-            <Typography variant="body2" color="text.secondary">Score</Typography>
-            <Typography sx={{ fontWeight: 500, mt: 0.5 }}>{student.score}</Typography>
+            <Typography variant="body2" color="text.secondary">
+              Score
+            </Typography>
+            <Typography sx={{ fontWeight: 500, mt: 0.5 }}>
+              {student.score}
+            </Typography>
           </Grid>
 
           <Grid size={{ xs: 12 }}>
@@ -139,6 +166,21 @@ export default function ProfilePage() {
           </Grid>
         </Grid>
       </Paper>
+
+      <Button
+        startIcon={<EditIcon />}
+        variant="contained"
+        onClick={() => router.push("/profile/edit")}
+        sx={{
+          backgroundColor: "#111",
+          textTransform: "none",
+          px: 3,
+          py: 1.2,
+          "&:hover": { backgroundColor: "#333" },
+        }}
+      >
+        Edit Profile
+      </Button>
     </Box>
   );
 }
