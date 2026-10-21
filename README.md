@@ -1,71 +1,61 @@
 # Student Management Dashboard
 
-A full-stack style Student Management System built with **Next.js (App Router)**, **TypeScript**, and **Material UI**.  
-It supports role-based access for **Admin** and **Student**, with localStorage-based data persistence (no backend required).
+A student management admin application built with **Next.js (App Router), React and TypeScript**. It lets an admin or trainer add, edit, view, search, filter and delete students, with a live summary dashboard and a multi-step form with per-step validation.
 
----
+The app has no backend. All data is stored in the browser's `localStorage` through a dedicated async-style service layer, so a real API could be swapped in later without changing any component code.
 
 ## Features
 
-### Admin
-- Secure login
-- Dashboard with live stats (Total, Active, Completed, Average Score, Pending Assignments)
-- View all students in a DataGrid (sort + pagination)
-- Search students (debounced) by name or email
-- Filter by Course, Status, and Score range
-- Add student (multi-step form with Formik + Yup + Stepper)
-- Edit student details, score, and status
-- Delete student (with confirmation dialog)
-- View student details with progress bar
-- Post and delete events
-- Calendar with holidays
-
-### Student
-- Login with email + common password
-- View own profile only
-- Edit own profile (except score and status)
-- View events
-- View calendar
-- Cannot access other students’ data or admin routes
-
----
+- **Dashboard:** Reusable Stat Cards for Total Students, Active Students, Completed Students, Average Score and Pending Assignments, all calculated live from stored data.
+- **Student data table:** Pagination, column sorting, and View / Edit / Delete row actions.
+- **Search and filters:** Debounced search by name or email, filters by course, status and score range (0-50, 51-75, 76-100), with Apply Filters and Reset actions. All filtering runs client-side.
+- **Multi-step Add Student form:** A three-step Stepper (Personal Information, Course Information, Confirmation) built with Formik and Yup. Each step validates its own fields before the user can continue, and the last step shows a read-only summary before submitting.
+- **Validation:** Required fields, valid email format, email uniqueness across existing students, and numeric phone validation.
+- **Student details page:** Personal and course information, status, score, and a progress bar tied to the score, with Edit and Back buttons.
+- **Edit student:** Reuses the same form structure and Yup schema, pre-filled with existing data, and returns to the student list after saving.
+- **Delete with confirmation:** A confirmation dialog before deletion and a React Toastify success notification afterwards.
+- **Loading, error and empty states:** A loading indicator while data resolves, an "Unable to load students." message with a Retry button on failure, and a "No students found." message with an Add Student button when the list is empty.
 
 ## Tech Stack
 
-- **Next.js 16** (App Router)
-- **TypeScript**
-- **Material UI (MUI)** + **MUI X DataGrid**
-- **Formik** + **Yup**
-- **React Toastify**
-- **localStorage** (data layer)
+| Area | Technology |
+|---|---|
+| Framework | Next.js (App Router) |
+| Language | TypeScript |
+| UI and icons | Material UI, MUI Icons |
+| Data table | MUI DataGrid |
+| Forms and validation | Formik, Yup |
+| Notifications | React Toastify |
+| State and data | React Hooks (`useState`, `useEffect`, `useContext`, `useRouter`, `useParams`), custom `useStudents()` hook |
+| Storage | Browser `localStorage` via a service layer |
 
----
+## Routes
+
+| Route | Page |
+|---|---|
+| `/` | Home |
+| `/dashboard` | Dashboard with summary stats |
+| `/students` | Student list with search, filters and table |
+| `/students/add` | Add student (multi-step form) |
+| `/students/:id` | Student details |
+| `/students/:id/edit` | Edit student |
+
+## Architecture
+
+Components never access `localStorage` directly. All data operations go through `services/studentService.ts`, which exposes async functions:
+
+- `getStudents()`
+- `getStudentById(id)`
+- `createStudent(data)`
+- `updateStudent(id, data)`
+- `deleteStudent(id)`
+
+A `useStudents()` hook wraps the service for components and exposes `students`, `loading`, `error`, `addStudent`, `updateStudent` and `deleteStudent`. An `AppContext` shares the current admin info (shown in the header) without prop drilling.
 
 ## Project Structure
 
-```text
+```
 src/
-├── app/                    # Next.js routes (thin wrappers)
-│   ├── login/
-│   ├── dashboard/
-│   ├── students/
-│   │   ├── add/
-│   │   ├── [id]/
-│   │   └── [id]/edit/
-│   ├── profile/
-│   │   └── edit/
-│   ├── events/
-│   └── calendar/
-├── pages/                  # Page logic components
-│   ├── Login/
-│   ├── Dashboard/
-│   ├── Students/
-│   ├── AddStudent/
-│   ├── StudentDetails/
-│   ├── EditStudent/
-│   ├── Profile/
-│   ├── Events/
-│   └── Calendar/
 ├── components/
 │   ├── Header/
 │   ├── Sidebar/
@@ -74,15 +64,61 @@ src/
 │   ├── StudentForm/
 │   ├── StudentFilters/
 │   ├── ConfirmDialog/
-│   ├── Loading/
-│   └── Providers.tsx
-├── context/
-│   ├── AppContext.tsx
-│   └── AuthContext.tsx
+│   └── Loading/
+├── pages/ (or app/ routes)
+│   ├── Dashboard/
+│   ├── Students/
+│   ├── AddStudent/
+│   ├── StudentDetails/
+│   └── EditStudent/
 ├── services/
-│   ├── studentService.ts
-│   └── eventService.ts
+│   └── studentService.ts
+├── hooks/
+│   └── useStudents.ts
 ├── types/
-│   ├── student.ts
-│   └── event.ts
-└── hooks/
+│   └── student.ts
+└── context/
+    └── AppContext.tsx
+```
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 18 or later
+- npm
+
+### Installation
+
+```bash
+git clone <your-repo-url>
+cd <your-project-folder>
+npm install
+```
+
+### Run the development server
+
+```bash
+npm run dev
+```
+
+Then open [http://localhost:3000](http://localhost:3000) in your browser.
+
+### Build for production
+
+```bash
+npm run build
+npm start
+```
+
+## Assumptions
+
+- There is no backend. `localStorage` is the only data source, and data is stored per browser.
+- Clearing browser storage removes all student records.
+- The service layer is async-style (with a short simulated delay) so the UI handles loading and error states as it would with a real API.
+- The sidebar only links to routes that exist (Dashboard and Students).
+- Score filter buckets are fixed at 0-50, 51-75 and 76-100.
+
+## License
+
+This project was built as part of a React and TypeScript assessment.
